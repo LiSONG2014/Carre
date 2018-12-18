@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include <QMessageBox>
 namespace Ui {
 class MainWindow;
 }
@@ -18,9 +18,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void changeValueX(int x);    
-    void changeValueY(int y);
-    void changeValueZoom(double Zoom);
+    void changeValue();
 
 private:
     Ui::MainWindow *ui;

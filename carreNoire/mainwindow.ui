@@ -23,7 +23,7 @@
    <enum>Qt::LeftToRight</enum>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>9</x>
@@ -89,7 +89,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="SpinBox_zoom"/>
+        <widget class="QDoubleSpinBox" name="SpinBox_zoom">
+         <property name="minimum">
+          <double>0.000000000000000</double>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

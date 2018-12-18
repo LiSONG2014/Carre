@@ -12,6 +12,8 @@
 #include <QDebug>
 #include <QDesktopWidget>
 
+#define MIN(a,b)(((a)<(b))?(a):(b))
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -22,12 +24,12 @@ MainWindow::MainWindow(QWidget *parent) :
     zoom = 1;
     pos_x=this->width()/2;
     pos_y=this->height()/2;
-    ui->spinBox_x->setValue(this->width()/2);
-    ui->spinBox_y->setValue(this->height()/2);
+    ui->spinBox_x->setValue(pos_x);
+    ui->spinBox_y->setValue(pos_y);
     ui->SpinBox_zoom->setValue(zoom);
-    connect(ui->spinBox_x,SIGNAL(valueChanged(int)),this,SLOT(changeValueX(int)));
-    connect(ui->spinBox_y,SIGNAL(valueChanged(int)),this,SLOT(changeValueY(int)));
-    connect(ui->SpinBox_zoom,SIGNAL(valueChanged(double)),this,SLOT(changeValueZoom(double)));
+    connect(ui->spinBox_x,SIGNAL(valueChanged(int)),this,SLOT(changeValue()));
+    connect(ui->spinBox_y,SIGNAL(valueChanged(int)),this,SLOT(changeValue()));
+    connect(ui->SpinBox_zoom,SIGNAL(valueChanged(double)),this,SLOT(changeValue()));
 
 }
 
@@ -37,68 +39,96 @@ void MainWindow::paintEvent(QPaintEvent*event)
     QPen pen_carre;
     pen_carre.setColor(Qt::black);
     painter.setPen(pen_carre);
-
     QBrush brush (Qt::black, Qt::SolidPattern);
     painter.setBrush(brush);
+
     dim = dim_init * zoom;
     QRect rectangle_carre(pos_x-(dim/2), pos_y-(dim/2), dim, dim);
     painter.drawRect(rectangle_carre);
     QMainWindow::paintEvent(event);
 }
 
-void MainWindow::changeValueX(int X)
+void MainWindow::changeValue()
 {
-    if ((X-(dim/2)) < 0)
-    {
-        pos_x = (dim/2);
+    pos_x=ui->spinBox_x->value();
+    pos_y=ui->spinBox_y->value();
+    zoom=ui->SpinBox_zoom->value();
+    dim=dim_init*zoom;
+    if((pos_x > this->width())||(pos_x<=0))
+    { QMessageBox::about(this , "Le carré est dépassé la bordure de l'interface.",
+                         "Veuillez modifier la position");
+        pos_x=this->width()/2;
         ui->spinBox_x->setValue(pos_x);
-        repaint();
     }
-    if ((X+(dim/2)) > this->width())
-    {
-        pos_x = this->width() - (dim/2);
-        ui->spinBox_x->setValue(pos_x);
-        repaint();
-    }
-    if ( ((X-(dim/2))>=0) && ((X+(dim/2)) <= this->width()) )
-    {
-        pos_x = X;
-        repaint();
-    }
-}
-
-void MainWindow::changeValueY(int Y)
-{
-    if ((Y-(dim/2)) < 0)
-    {
-        pos_y = (dim/2);
+    if((pos_y > this->height())||(pos_y<=0))
+    { QMessageBox::about(this , "Le carré est dépassé la bordure de l'interface.",
+                         "Veuillez modifier la position");
+        pos_y=this->height()/2;
         ui->spinBox_y->setValue(pos_y);
-        repaint();
     }
-    if ((Y+(dim/2)) > this->height())
+    if(((pos_x-dim/2)<0)||((pos_y-dim/2)<0)
+            ||((pos_x+dim/2)>this->width())
+            ||((pos_y+dim/2)>this->height())
+            )
     {
-        pos_y = this->height() - (dim/2);
-        ui->spinBox_y->setValue(pos_y);
-        repaint();
+        QMessageBox::about(this , "Le carré est dépassé la bordure de l'interface.",
+                           "Veuillez modifier la position, la dimension ou le zoom");
+
+        if((pos_x+dim/2)>this->width())
+        {
+            if((pos_y+dim/2)>this->height()){
+                if((pos_x+dim/2-this->width())>((pos_y+dim/2)-this->height()))
+                {
+                    dim=(this->width()-pos_x)*2;
+                }else{
+                    dim=(this->height()-pos_y)*2;
+                }
+            }else if((pos_y-dim/2)<0)
+            {
+                if((pos_x+dim/2-this->width())>(dim/2-pos_y))
+                {
+                    dim=(this->width()-pos_x)*2;
+                }else{
+                    dim=(this->height()-pos_y)*2;
+                }
+            }else
+            {
+                dim=(this->width()-pos_x)*2;
+            }
+
+        }else if(pos_x-dim/2<0)
+        {
+            if((pos_y+dim/2)>this->height()){
+                if((dim/2-pos_x)>((pos_y+dim/2)-this->height()))
+                {
+                    dim=pos_x*2;
+                }else
+                {
+                    dim=(this->height()-pos_y)*2;
+                }
+            }else if((pos_y-dim/2)<0)
+            {
+                dim=qMin(pos_x,pos_y);
+            }else {dim=pos_x*2;}
+
+        }else
+        {
+            if((pos_y+dim/2)>this->height())
+            {
+                dim=(this->height()-pos_y)*2;
+            }else if((pos_y-dim/2)<0)
+            {
+                dim=pos_y*2;
+            }
+        }
+
+        ui->SpinBox_zoom->setValue(double(dim)/dim_init);
     }
-    if ( ((Y-(dim/2)) >= 0) && ((Y+(dim/2)) <= this->height()) )
-    {
-        pos_y = Y;
-        repaint();
-    }
+    update();
 }
 
-void MainWindow::changeValueZoom(double Zoom)
-{
-    if( ((dim_init*Zoom)<=this->width()) && ((dim_init*Zoom)<=this->height())
-            && ((dim_init*Zoom)+pos_y<=this->height()) && ((dim_init*Zoom)+pos_x<=this->width()) && (pos_x-dim>=0) && (pos_y-dim/2>=0))
-    {
-        zoom = Zoom;
-        repaint();
-    }
-}
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
+    MainWindow::~MainWindow()
+    {
+        delete ui;
+    }
